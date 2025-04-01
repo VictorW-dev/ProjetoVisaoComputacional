@@ -1,0 +1,28 @@
+# Ambientes virtuais
+venv/
+.env/
+.envrc
+
+# Caches do Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Logs
+*.log
+
+# Dados e resultados gerados
+data/processed/
+data/keypoints/
+models/checkpoints/
+models/resultados/
+
+# Arquivos temporários de sistema
+.DS_Store
+Thumbs.db
+
+# Notebooks gerados por erro
+.ipynb_checkpoints/
+
+# Arquivos do VSCode
+.vscode/
