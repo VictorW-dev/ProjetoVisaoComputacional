@@ -1,0 +1,1 @@
+# Funções auxiliares (leitura, transformação, etc.)

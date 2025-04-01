@@ -1,0 +1,1 @@
+# Constrói vetores de características (relativas/absolutas)
