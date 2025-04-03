@@ -60,6 +60,16 @@ python src/1_extract_frames.py --fps 10
 python src/2_yolo_pose_inference.py --input_dir ... --output_dir ...
 ```
 
+## Frontend:
+
+### 1. Install
+
+`pip install streamlit==1.44.1 pytubefix==8.12.3`
+
+### 2. Player
+
+`streamlit run front.py`
+
 ---
 
 ## 📌 Tema
@@ -68,9 +78,18 @@ Violência Física
 
 Este projeto utiliza o Real-World Violence Dataset para detectar comportamentos agressivos em ambientes monitorados por vídeo.
 
+
+
+
 ---
 
 ## 👨‍💻 Desenvolvido por
 
-[Victor Winicius Barros Santos](https://github.com/VictorW-dev)  
+[Victor Winicius Barros Santos
+](https://github.com/VictorW-dev)
 
+[
+](https://github.com/VictorW-dev)
+
+[
+](https://github.com/VictorW-dev)
