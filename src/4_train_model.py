@@ -1,20 +1,17 @@
-# Treina os modelos RNN, GRU, LSTM
-
 import os
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-import numpy as np
 import argparse
 
 # ==== Parâmetros padrão ====
-SEQ_LEN = 30              # número de frames por sequência
-INPUT_SIZE = 34           # 17 keypoints (x, y)
+SEQ_LEN = 30
 HIDDEN_SIZE = 64
 BATCH_SIZE = 16
 EPOCHS = 10
 LR = 0.001
+KEYPOINTS_PER_PERSON = 34  # 17 keypoints (x, y)
 
 # ==== Dataset Customizado ====
 class ViolenceDataset(Dataset):
@@ -65,8 +62,9 @@ class RNNClassifier(nn.Module):
         return self.fc(h_n[-1])
 
 # ==== Treinamento ====
-def train_model(model_type, violence_csvs, nonviolence_csvs):
+def train_model(model_type, violence_csvs, nonviolence_csvs, max_people):
     print(f"📦 Carregando dados para modelo: {model_type.upper()}")
+    input_size = max_people * KEYPOINTS_PER_PERSON
 
     data_paths = violence_csvs + nonviolence_csvs
     labels = [1] * len(violence_csvs) + [0] * len(nonviolence_csvs)
@@ -75,11 +73,11 @@ def train_model(model_type, violence_csvs, nonviolence_csvs):
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     if model_type == "lstm":
-        model = LSTMClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = LSTMClassifier(input_size, HIDDEN_SIZE)
     elif model_type == "gru":
-        model = GRUClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = GRUClassifier(input_size, HIDDEN_SIZE)
     elif model_type == "rnn":
-        model = RNNClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = RNNClassifier(input_size, HIDDEN_SIZE)
     else:
         raise ValueError("Modelo inválido. Escolha entre: lstm, gru, rnn")
 
@@ -106,12 +104,13 @@ def train_model(model_type, violence_csvs, nonviolence_csvs):
     torch.save(model.state_dict(), model_path)
     print(f"✅ Modelo salvo em: {model_path}")
 
-# ==== Execução via terminal ====
+# ==== Terminal ====
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Treina um modelo RNN/GRU/LSTM para detecção de violência.")
     parser.add_argument("--model", type=str, default="lstm", choices=["lstm", "gru", "rnn"], help="Tipo de modelo")
-    parser.add_argument("--violence", nargs="+", required=True, help="Paths dos CSVs com violência")
-    parser.add_argument("--nonviolence", nargs="+", required=True, help="Paths dos CSVs sem violência")
-    args = parser.parse_args()
+    parser.add_argument("--violence", nargs="+", required=True, help="CSVs com violência")
+    parser.add_argument("--nonviolence", nargs="+", required=True, help="CSVs sem violência")
+    parser.add_argument("--max_people", type=int, default=3, help="Número máximo de pessoas por frame")
 
-    train_model(args.model, args.violence, args.nonviolence)
+    args = parser.parse_args()
+    train_model(args.model, args.violence, args.nonviolence, args.max_people)
