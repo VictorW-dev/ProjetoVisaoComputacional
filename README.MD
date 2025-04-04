@@ -8,10 +8,11 @@ Este projeto tem como objetivo desenvolver um sistema automatizado para detectar
 
 ```
 projeto-violencia-fisica/
-├── data/                # Dados brutos e processados
-├── models/              # Checkpoints e resultados
-├── report/              # Relatório final
+├── data/                # Dados brutos, frames, keypoints e vetores
+├── models/              # Checkpoints de modelos treinados (.pth)
+├── report/              # Relatório final e análises
 ├── src/                 # Scripts principais do pipeline
+├── requirements.txt     # Dependências do projeto
 └── README.md
 ```
 
@@ -20,10 +21,13 @@ projeto-violencia-fisica/
 ## 🧪 Etapas do Pipeline
 
 1. **Extração de frames** dos vídeos (`1_extract_frames.py`)
-2. **Estimativa de poses** com YOLOv8 Pose (`2_yolo_pose_inference.py`)
-3. **Construção de vetores de características** dos keypoints
-4. **Classificação** usando modelos RNN/GRU/LSTM
-5. (Opcional) **Interface Web** com Streamlit
+2. **Estimativa de poses humanas** com YOLOv8 Pose (`2_yolo_pose_inference.py`)
+3. **Construção de vetores de características** dos keypoints (`3_extract_features.py`)
+   - Suporta múltiplas pessoas por frame com o argumento `--max_people`
+4. **Classificação temporal** com modelos RNN, GRU ou LSTM (`4_train_model.py`)
+5. **Avaliação do modelo** com métricas e matriz de confusão (`5_evaluate_model.py`)
+6. (Opcional) **Interface Web** com Streamlit (em desenvolvimento)
+7. **Execução completa automatizada** com `run_pipeline.py`
 
 ---
 
@@ -33,7 +37,9 @@ projeto-violencia-fisica/
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
+venv\Scripts\activate  # Windows
+# ou
+source venv/bin/activate  # Linux/Mac
 ```
 
 ### 2. Instale as dependências:
@@ -42,35 +48,65 @@ source venv/bin/activate  # ou venv\Scripts\activate no Windows
 pip install -r requirements.txt
 ```
 
-### 3. Gere um vídeo de teste:
+---
+
+## 📼 Exemplo de uso com `run_pipeline.py`
+
+### Pré-requisitos:
+- Coloque os vídeos em `data/raw/` com nomes como:
+  - `Fight1.mp4`, `Normal1.mp4`, `Fight2.mp4`, `Normal2.mp4`
+
+### Comando único para processar tudo:
 
 ```bash
-python src/generate_dummy_video.py
+python src/run_pipeline.py ^
+  --model lstm ^
+  --fps 10 ^
+  --max_people 5 ^
+  --train_violence Fight1 ^
+  --train_nonviolence Normal1 ^
+  --test_violence Fight2 ^
+  --test_nonviolence Normal2
 ```
 
-### 4. Extraia os frames:
+---
 
-```bash
-python src/1_extract_frames.py --fps 10
-```
+## ⚙️ Parâmetros úteis
 
-### 5. Rode YOLO Pose:
-
-```bash
-python src/2_yolo_pose_inference.py --input_dir ... --output_dir ...
-```
+- `--model`: tipo de modelo (`lstm`, `gru` ou `rnn`)
+- `--fps`: taxa de quadros para extração de frames
+- `--max_people`: número máximo de pessoas consideradas por frame (default = 3)
 
 ---
 
 ## 📌 Tema
 
-Violência Física
+**Violência Física**
 
-Este projeto utiliza o Real-World Violence Dataset para detectar comportamentos agressivos em ambientes monitorados por vídeo.
+Este projeto utiliza vídeos do **Real-World Violence Dataset** e/ou outros contextos de vigilância para detectar comportamentos agressivos de forma automatizada.
+
+---
+
+## 📊 Métricas de exemplo (teste real)
+
+- **Acurácia geral:** 92.8%
+- **Recall (violência):** 100%
+- **Falsos positivos:** 9
+- **Falsos negativos:** 0
+
+> O sistema é altamente sensível a eventos de violência, priorizando a não perda de detecções relevantes.
+
+---
+
+## ⚠️ Observações
+
+- O vetor por frame é composto pelos keypoints de até `N` pessoas (`N × 34` valores).
+- Se houver menos pessoas no frame, o vetor é preenchido com zeros.
+- Se houver mais, apenas as primeiras `N` pessoas detectadas são consideradas.
+- Isso permite entrada fixa para as redes neurais recorrentes.
 
 ---
 
 ## 👨‍💻 Desenvolvido por
 
-[Victor Winicius Barros Santos](https://github.com/VictorW-dev)  
-
+[Victor Winicius Barros Santos](https://github.com/VictorW-dev)
