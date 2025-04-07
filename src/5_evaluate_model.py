@@ -12,7 +12,7 @@ import seaborn as sns
 
 # ==== Parâmetros ====
 SEQ_LEN = 30
-INPUT_SIZE = 34
+INPUT_SIZE = 34*5
 HIDDEN_SIZE = 64
 BATCH_SIZE = 16
 
@@ -109,7 +109,7 @@ def evaluate_model(model_type, model_path, violence_csvs, nonviolence_csvs):
     plt.xlabel("Predito")
     plt.ylabel("Real")
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 # ==== Terminal ====
 if __name__ == "__main__":

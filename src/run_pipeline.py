@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Executa o pipeline completo para treino e teste.")
     parser.add_argument("--model", type=str, default="lstm", choices=["lstm", "gru", "rnn"])
     parser.add_argument("--fps", type=int, default=10)
-    parser.add_argument("--max_people", type=int, default=3, help="Máximo de pessoas por frame")
+    parser.add_argument("--max_people", type=int, default=5, help="Máximo de pessoas por frame")
     parser.add_argument("--train_violence", nargs="+", required=True)
     parser.add_argument("--train_nonviolence", nargs="+", required=True)
     parser.add_argument("--test_violence", nargs="+", help="Vídeos de teste com violência")

@@ -64,7 +64,7 @@ class RNNClassifier(nn.Module):
 # ==== Treinamento ====
 def train_model(model_type, violence_csvs, nonviolence_csvs, max_people):
     print(f"📦 Carregando dados para modelo: {model_type.upper()}")
-    input_size = max_people * KEYPOINTS_PER_PERSON
+    input_size = 5 * 34
 
     data_paths = violence_csvs + nonviolence_csvs
     labels = [1] * len(violence_csvs) + [0] * len(nonviolence_csvs)
