@@ -1,4 +1,3 @@
-# Avalia o modelo, plota métricas
 
 import torch
 import torch.nn as nn
@@ -9,11 +8,11 @@ import argparse
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
-# ==== Parâmetros ====
+# ==== Parâmetros base ====
+KEYPOINTS_PER_PERSON = 34
 SEQ_LEN = 30
-INPUT_SIZE = 34*5
-HIDDEN_SIZE = 64
 BATCH_SIZE = 16
 
 # ==== Dataset ====
@@ -65,24 +64,24 @@ class RNNClassifier(nn.Module):
         return self.fc(h_n[-1])
 
 # ==== Avaliação ====
-def evaluate_model(model_type, model_path, violence_csvs, nonviolence_csvs):
+def evaluate_model(model_type, model_path, violence_csvs, nonviolence_csvs, max_people=3, video_name="ytvideo", hidden_size=64):
     print(f"📊 Avaliando modelo: {model_type.upper()}")
 
+    input_size = max_people * KEYPOINTS_PER_PERSON
     data_paths = violence_csvs + nonviolence_csvs
     labels = [1] * len(violence_csvs) + [0] * len(nonviolence_csvs)
 
     dataset = ViolenceDataset(data_paths, labels, SEQ_LEN)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-    # Carrega o modelo
     if model_type == "lstm":
-        model = LSTMClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = LSTMClassifier(input_size, hidden_size)
     elif model_type == "gru":
-        model = GRUClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = GRUClassifier(input_size, hidden_size)
     elif model_type == "rnn":
-        model = RNNClassifier(INPUT_SIZE, HIDDEN_SIZE)
+        model = RNNClassifier(input_size, hidden_size)
     else:
-        raise ValueError("Modelo inválido. Escolha entre: lstm, gru, rnn")
+        raise ValueError("Modelo inválido.")
 
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -97,27 +96,43 @@ def evaluate_model(model_type, model_path, violence_csvs, nonviolence_csvs):
             y_true.extend(y_batch.numpy())
             y_pred.extend(preds.numpy())
 
-    # Métricas
+    report = classification_report(y_true, y_pred, target_names=["Não violência", "Violência"])
     print("=== Relatório de Classificação ===")
-    print(classification_report(y_true, y_pred, target_names=["Não violência", "Violência"]))
+    print(report)
+
+    os.makedirs("report", exist_ok=True)
+
+    # Salva o relatório
+    with open(f"report/{video_name}_metrics.txt", "w") as f:
+        f.write(report)
 
     # Matriz de confusão
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(5, 4))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Não violência", "Violência"], yticklabels=["Não violência", "Violência"])
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                xticklabels=["Não violência", "Violência"],
+                yticklabels=["Não violência", "Violência"])
     plt.title("Matriz de Confusão")
     plt.xlabel("Predito")
     plt.ylabel("Real")
     plt.tight_layout()
-    #plt.show()
+    plt.savefig(f"report/{video_name}_confusion.png")
+    plt.close()
+
+    # Salvar CSV com previsões
+    df_preds = pd.DataFrame({"Real": y_true, "Previsto": y_pred})
+    df_preds.to_csv(f"report/{video_name}_predictions.csv", index=False)
 
 # ==== Terminal ====
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Avalia um modelo treinado (LSTM/GRU/RNN) com novos dados.")
-    parser.add_argument("--model", type=str, default="lstm", choices=["lstm", "gru", "rnn"], help="Tipo do modelo")
-    parser.add_argument("--model_path", type=str, required=True, help="Caminho do arquivo .pth salvo")
-    parser.add_argument("--violence", nargs="+", required=True, help="CSVs com violência")
-    parser.add_argument("--nonviolence", nargs="+", required=True, help="CSVs sem violência")
-    args = parser.parse_args()
+    parser.add_argument("--model", type=str, default="lstm", choices=["lstm", "gru", "rnn"])
+    parser.add_argument("--model_path", type=str, required=True)
+    parser.add_argument("--violence", nargs="+", required=True)
+    parser.add_argument("--nonviolence", nargs="+", required=True)
+    parser.add_argument("--max_people", type=int, default=3)
+    parser.add_argument("--video_name", type=str, default="ytvideo")
+    parser.add_argument("--hidden_size", type=int, default=64)
 
-    evaluate_model(args.model, args.model_path, args.violence, args.nonviolence)
+    args = parser.parse_args()
+    evaluate_model(args.model, args.model_path, args.violence, args.nonviolence, args.max_people, args.video_name, args.hidden_size)

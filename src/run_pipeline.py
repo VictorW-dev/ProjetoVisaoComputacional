@@ -41,7 +41,10 @@ def run_pipeline(train_violence, train_nonviolence, test_violence=None, test_non
         test_v = [process_video(v, fps, max_people) for v in test_violence]
         test_nv = [process_video(v, fps, max_people) for v in test_nonviolence]
 
-        eval_cmd = f"python src/5_evaluate_model.py --model {model} --model_path {model_path} --violence {' '.join(test_v)} --nonviolence {' '.join(test_nv)}"
+        # Usa o primeiro vídeo de teste de violência como identificador
+        video_name = test_violence[0] if test_violence else "ytvideo"
+
+        eval_cmd = f"python 5_evaluate_model_custom.py --model {model} --model_path {model_path} --violence {' '.join(test_v)} --nonviolence {' '.join(test_nv)} --max_people {max_people} --video_name {video_name}"
         print("📊 Avaliando modelo...")
         subprocess.run(eval_cmd, shell=True)
 
